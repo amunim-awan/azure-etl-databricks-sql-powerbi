@@ -1,0 +1,51 @@
+# Add/adjust endpoints here. The extractor will loop through this file and land raw JSONL into:
+#   adls://{container}/bronze/{source}/{endpoint}/run_date=YYYY-MM-DD/data.jsonl
+
+superoperator:
+  base_url_env: SUPEROPERATOR_BASE_URL
+  auth:
+    type: api_key_header
+    header_name: Authorization
+    header_template: "Bearer {api_key}"
+    api_key_secret_env: SUPEROPERATOR_API_KEY_SECRET_NAME
+  endpoints:
+    - name: customers
+      path: /customers
+      pagination:
+        type: page
+        page_param: page
+        page_size_param: per_page
+        page_size: 500
+    - name: payments
+      path: /payments
+      pagination:
+        type: page
+        page_param: page
+        page_size_param: per_page
+        page_size: 500
+      incremental:
+        type: updated_since
+        param: updated_since
+        from_days_ago: 7
+    - name: recognitions
+      path: /recognitions
+      pagination:
+        type: page
+        page_param: page
+        page_size_param: per_page
+        page_size: 500
+
+quickbooks:
+  auth:
+    type: oauth2_refresh_token
+    token_url: https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer
+    company_id_env: QUICKBOOKS_COMPANY_ID
+    env_env: QUICKBOOKS_ENV
+    client_id_secret_env: QUICKBOOKS_CLIENT_ID_SECRET_NAME
+    client_secret_secret_env: QUICKBOOKS_CLIENT_SECRET_SECRET_NAME
+    refresh_token_secret_env: QUICKBOOKS_REFRESH_TOKEN_SECRET_NAME
+  endpoints:
+    - name: invoices
+      query: "select * from Invoice maxresults 1000"
+    - name: payments
+      query: "select * from Payment maxresults 1000"
